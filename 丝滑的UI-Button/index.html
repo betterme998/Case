@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      /* 6.添加透视 */
+      background-color: #edf1f4;
+      perspective: 500px;
+      --c-wrap-shadoe1: #f5f9fd;
+      --c-wrap-shadoe2: #d8dbe5;
+      --c-wrap-bg: #e2e6eb;
+      --c-btn-shadow1: #d9dbe6;
+      --c-btn-shadow2: #f5f9fd;
+      --c-txt1:#aaa;
+      --c-txt2:#111;
+      transition: background-color 0.4s linear;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+    }
+    .dark {
+      background-color:#333;
+      --c-wrap-shadow1:#292929;
+      --c-wrap-shadow2:#202020;
+      --c-wrap-bg:#505050;
+      --c-btn-shadow1:#323232;
+      --c-btn-shadow2:#444;
+      --c-txt1:#888;
+      --c-txt2:#fff;
+    }
+    #btnWrapper {
+      position: relative;
+      width: 380px;
+      height: 80px;
+      padding: 12px 16px;
+      margin: 300px auto 0;
+      border-radius: 12px;
+      overflow: hidden;
+      background-color: var(--c-wrap-bg);
+      box-shadow: -10px -10px 15px var(--c-wrap-shadow1), 10px 10px 15px var(--c-wrap-shadow2);
+
+      /* 6.1添加转换原点 */
+      /* transform-origin: center; */
+      /* 为了更灵活 将原点设置为按钮2半侧的某个点，反之亦然 */
+      /* 修改为动态使用css变量 */
+      transform-origin: var(--wraper-origin);
+      transition: transform 0.4s cubic-bezier(0, 0, 0.48, 1), box-shadow 0.4s linear, background-color 0.4s linear;
+    }
+    .rotateWrap {
+      /* 添加y轴旋转 */
+      transform: rotateY(var(--wraper-rotate));
+    }
+
+
+    /* 2.滑块用伪元素来实现 */
+    #btnWrapper::before {
+      content: "";
+      position: absolute;
+      left: var(--groove-left);
+      top: 12px;
+      width: calc(50% - 16px - 8px);
+      height: calc(100% - 24px);
+      border-radius: 12px;
+      box-shadow: inset 8px 8px 6px var(--c-btn-shadow1),
+                  inset -5px -5px 15px var(--c-btn-shadow2),
+                  inset -5px -5px 15px var(--c-btn-shadow2),
+                  inset 8px 8px 6px var(--c-btn-shadow1);
+      /* 用js来添加变量 */
+      left: var(--groove-left);
+      transition: left 1s cubic-bezier(0.82, 0.12, 0.18, 0.88),box-shadow 0.4s linear;
+    }
+
+    /* 5.按钮选中缩进动画 */
+    @keyframes txtEnterScale {
+      0% {
+        transform: scale(1);
+      }
+
+      80% {
+        transform: scale(1.15);
+      }
+
+      100% {
+        transform: scale(1.1);
+      }
+    }
+    /* 按钮未选中动画 */
+    @keyframes txtOutScale {
+      0% {
+        transform: scale(1.1);
+      }
+
+      80% {
+        transform: scale(0.95);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    .btn {
+      float: left;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 50%;
+      height: 100%;
+      /* padding: inherit; */
+      color: var(--c-txt1);
+      cursor: pointer;
+
+      transition: color 0.4s linear;
+      animation: txtOutScale 0.6s linear;
+    }
+    .active {
+      color: #111;
+      transform: scale(1.1);
+      animation: txtEnterScale 0.4s linear;
+    }
+
+    
+  </style>
+</head>
+<body>
+  <!-- 1.因为滑块用绝对定位，所以容器得先相对定位，同时给到宽度： -->
+  <div id="btnWrapper">
+    <!-- 3.按钮 -->
+    <div class="btn active">开灯</div>
+    <div class="btn">关灯</div>
+  </div>
+  <script>
+    // 4.滑动效果
+    // 获取容器元素
+    let wrapper = document.getElementById('btnWrapper');
+    // 先给容器设置一个css变量并附初始值
+    wrapper.style.setProperty('--groove-left', '12px');
+    // 获取按钮元素
+    let btns = document.getElementsByClassName('btn');
+    for(let i = 0; i < btns.length; i++) {
+      // 每个按钮添加点击事件
+      btns[i].addEventListener('click', function (e) {
+        ThemeChange(i===1);
+        resetBtn(btns);//初始化所有按钮类名
+        // 点击后修改css变量值
+        wrapper.style.setProperty('--groove-left',`calc(12px + ${i * 50}%)`);
+        wrapper.style.setProperty('--wraper-rotate',`${i===0 ? -8 : 8}deg`);
+        wrapper.style.setProperty('--wraper-origin',`${i === 0 ? '80% top' : '20% top'}`);//动态修改原点位置
+        wrapper.className = "rotateWrap"
+        // 并不是一点击按钮的 动画就开始了，选中状态的类名，是在滑块几乎完全滑到对应按钮
+        // 背后按钮的缩放状态和颜色才开始变化,未选中状态也类似，只是时间稍微提早
+        setTimeout(() => {
+          btns[i].className = 'btn active'
+        }, 500)
+
+        setTimeout(() => {
+          wrapper.className = ''; //清除类名
+        },550);//注意细节，这个时间
+        
+        
+      })
+    }
+
+    // 初始化所有按钮类名方法
+    function resetBtn(btns) {
+      for (let i = 0; i < btns.length; i++) {
+        setTimeout(() => {
+          btns[i].className = 'btn';
+        },100)
+      }
+    }
+
+    // 改变主题
+    function ThemeChange(bol) {
+      let body = document.body;
+      body.className = bol ? 'dark' : ''
+    }
+  </script> 
+</body>
+</html>
